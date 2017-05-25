@@ -1,9 +1,8 @@
 import os
 import sys
 import json
-import time
 import platform
-
+'''
 REP_directory = {
     '__data__': {
         'OS': platform.system(),
@@ -14,7 +13,7 @@ REP_directory = {
 def rep( N, Type ):
     
     
-    """
+    
         file_name : {
             'content': '',
             'size': 0
@@ -28,7 +27,6 @@ def rep( N, Type ):
             }
         ] 
     
-    """
     
     try:
         if Type == 'f':
@@ -63,11 +61,11 @@ def rep( N, Type ):
             print("< *** "+ N +" *** >")
     except:
         print "<ERROR: failed to rep.>"
-        """
+        
         with open('save.json', 'w') as JS:
             JS.write( json.dumps( REP_directory ) )
             JS.close()
-        """
+        
 
     with open('save.json', 'w') as JS:
         JS.write( json.dumps( REP_directory ) )
@@ -88,3 +86,39 @@ def main():
                 print("{ REP: '"+ i + "' }")
                 rep( i, 'dir' )
 main()
+'''
+
+def cloneDir(lvl,dirpath,dest_file):
+    
+    if os.path.isdir(dirpath):
+       cur_dir=os.listdir(dirpath)
+       
+       
+       obj = {
+           'type': 'root',
+           'dirpath': '',
+	   'contents': {}
+       }
+       for i in cur_dir:
+           if os.path.isfile(i):
+	      data=readFile(i)
+              obj['contents'][i]={
+                 'type': 'file',
+		 'data': data,
+		 'size': len(data)
+	      }
+           elif os.path.isdir("%s/%s"%(dir_path,i)):
+                obj['contents'][i]={
+                   'type': 'dir',
+		   'contents': {},
+                   'len': len(os.listdir("%s/%s"%(dir_path,i)))
+		}
+       if lvl == 0:
+          return obj
+       else:
+            
+
+
+if '__main__' == __name__:
+   args=sys.argv[1:]
+   cloneDir(1,args[0],args[1])
