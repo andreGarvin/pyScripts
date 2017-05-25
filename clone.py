@@ -1,6 +1,10 @@
 import sys
 import os
 
+def readFile( file_name ):
+    with open(file_name,'r') as of:
+	 return of.read()
+
 def clone( obj ):
     
     if len(obj['payload']) == 2:
@@ -80,4 +84,10 @@ def argParser( args ):
 
 if '__main__' == __name__:
    args=sys.argv[1:]
+
+   if len(args) <  1:
+      print "*error: this program requires two or more payload arguemts this was given '%d'" % (len(args))
+
+
    clone(argParser(args))
+   print readFile('../git.txt')
