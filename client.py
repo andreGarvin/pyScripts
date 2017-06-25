@@ -11,12 +11,14 @@ _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # recving conection from server
 _socket.connect((HOST, PORT))
 
-# holding the clinent/s response to send to the server
-client_response = ''
 # continously getting and sendig responses
-while client_response != 'kill' or client_response != 'q':
+while True:
 
-    client_response = input('client:%s:%s$ ' % ( HOST, PORT ))
+    # holding the clinent/s response to send to the server
+    try:
+        client_response = raw_input('client:(%s:%s)$ ' % ( HOST, PORT ))
+    except:
+        client_response = input('client:(%s:%s)$ ' % ( HOST, PORT ))
     _socket.send(bytes(client_response.encode('utf-8')))
 
     server_response = _socket.recv(max_size).decode('utf-8')

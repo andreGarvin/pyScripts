@@ -21,16 +21,19 @@ client_connection, client_address = _socket.accept()
 # displaying the client/s address
 print('[ Client Address: <%s:%d> ]' % ( client_address[0], client_address[1] ))
 
-# holginthe server response to send to the client/s
-server_response = ''
-while server_response != 'kill' or server_response != 'q':
+
+while True:
 
     # Getting the request data from client/s
     client_request = client_connection.recv( max_size ).decode('utf-8')
     print('\n> %s' % ( client_request ) )
 
+    # holding the server response to send to the client/s
     # sending back response to client/s
-    server_response = input('server:%s:%d$ ' % ( HOST, PORT ))
+    try:
+        server_response = raw_input('server:(%s:%d)$ ' % ( HOST, PORT ))
+    except:
+        server_response = input('client:(%s:%s)$ ' % ( HOST, PORT ))
     client_connection.send(bytes(server_response.encode('utf-8')))
 
 # closing client/s conection
