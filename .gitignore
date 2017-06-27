@@ -5,6 +5,7 @@ get-pip.
 file.txt
 test.py
 TFS.py
+.logs
 
 CRYPTO.py
 LOG.py
