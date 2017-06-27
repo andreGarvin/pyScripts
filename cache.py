@@ -87,7 +87,7 @@ def display_help( action ):
     }
 
 
-    if command_exist( action ):
+    if command_exist( action ) or action == None:
 
         # checks weather the fucntion was given a specfic command to read
         if action != None:
@@ -106,7 +106,7 @@ def display_help( action ):
                 print('\t- %s' % ( i ))
         return
 
-    handle_error("*error: Unknown command '%s', ecute `cache --help` to see all commands.")
+    handle_error("*error: Unknown command '%s', ecute `cache --help` to see all commands." % ( action ))
     return
 
 
@@ -388,16 +388,18 @@ def excute_command( action, args, payload ):
             get_log(None, 'all')
         return
 
+    elif action == 'help' or 'h' in args:
+
+        if len( payload ) != 0:
+            display_help( payload[0] )
+
+        else:
+            display_help( None )
+        return
+
     elif len( payload ) != 0:
-        if action == 'help' or 'h' in args:
 
-            if len( payload ) != 0:
-                display_help( payload[0] )
-
-            else:
-                display_help( None )
-
-        elif action == 'create':
+        if action == 'create':
             noncachables, cachables = [], []
 
             # iterate over all the items in payload
