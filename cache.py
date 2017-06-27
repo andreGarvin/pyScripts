@@ -15,7 +15,7 @@ cache.py, by Andre Garvin, 6-25-2017
     upated the cache, clean the cache entire cache storage.
 """
 # global varivbles used by the program
-destory_cacahe_Tree = False
+destory_cacahe_Tree, recent_cache = False, False
 cache_str_data, log_message = '', ''
 current_time = strftime("%m-%d-%Y", gmtime())
 
@@ -29,7 +29,8 @@ def display_help( action ):
             "info": """This shows the logs of all or a crertina cache docment/s.""",
             "snippet": [
                 "cache logs",
-                "cache logs < cache name >"
+                "cache logs < cache name >",
+                "cache logs < cache name > -r => [ pending ]"
             ]
         },
         "stat": {
@@ -185,7 +186,7 @@ def get_log( cache_name, query ):
         else:
             # show all 'cache_name' the the logs
             for p in specfic_logs:
-                print( '#' + ' '.join( specfic_logs[-1:][0] ) )
+                print( '#' + ' '.join( p ) )
 
     else:
         print( logs )
@@ -269,26 +270,31 @@ def log_cache( file_name, cache_str_data ):
         clogs.close()
 
 
-def clear_cache( cache_name ):
+def clear_cache( _cache_ ):
     """
         Clears the cache data of
         a given cache file or the
         entire cache folder. However
         not including the .logs file
     """
+    if type( _cache_ ) == list:
+        for c in _cache_:
+            clear_cache( c )
 
-    if cache_name == 'tree':
+    elif _cache_ == 'tree':
 
         ans = input('Are you sure wyou want to delete main tree cache(Y/n): ')
         if ans == 'Y':
-            os.rmdir('tree')
+            os.rmdir('./tree')
+            print('main cache tree has been prementaly deleted.')
             return 'tree=null'
 
         # returns this status report
         return 'tree=0'
 
     else:
-        os.remove('./tree/%s' % ( cache_name ))
+        os.remove('./tree/%s' % ( _cache_ ))
+        print("deleting cache '%s' prementaly." % ( _cache_ ))
         return '%s=null'
 
 
@@ -357,23 +363,32 @@ def ex_args( args, data ):
         the command line
     """
 
-    global log_message, destory_cacahe_Tree
+    global log_message, destory_cacahe_Tree, recent_cache
     # iterates over each command arg in the list args
     # and excutes them, along with the data passed in
     # the function exArgs()
     for i in args:
         if i == 'm':
             log_message = ' '.join( data )
-            # return log_message
 
         elif i == 'all':
             destory_cacahe_Tree = True
-            # return destory_cacahe_Tree
+
+        elif i == 'r':
+            recent_cache = True
 
 
 def excute_command( action, args, payload ):
 
-    if len( payload ) != 0:
+    if action == 'logs':
+
+        if len( payload ) == 1:
+            get_log(payload[0], 'single-all')
+        else:
+            get_log(None, 'all')
+        return
+
+    elif len( payload ) != 0:
         if action == 'help' or 'h' in args:
 
             if len( payload ) != 0:
@@ -416,7 +431,9 @@ def excute_command( action, args, payload ):
         elif action == 'stat':
             stat( payload[0] )
 
+
         return
+
 
     handle_error('*error: This program needs the required payload to proceed.')
 
@@ -476,7 +493,6 @@ if __name__ == '__main__':
 
 # todo for excute_command():
 
-    # elif action == 'logs':
     # elif action == 'update':
     # elif action == 'checkout':
     # else:
@@ -484,7 +500,7 @@ if __name__ == '__main__':
     #         handle_error("*error: Unknown command '%s', excute `cache --help < command name >` for the commands and usage." % ( action ))
 
 # later featrue for update():
-    
+
     # def slice_path( _path ):
     #     """
     #     Returns back a list of gets all the paths
