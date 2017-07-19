@@ -2,7 +2,7 @@ from time import gmtime, strftime
 import os, sys
 
 """
-cache.py, by Andre Garvin, 6-25-2017
+    cache.py, by Andre Garvin, 6-25-2017
 
     A cli tool built in python used to cache tree paths
     in current directories or anyother directories.
@@ -14,10 +14,13 @@ cache.py, by Andre Garvin, 6-25-2017
     This tool can also check for any new files or folders,
     upated the cache, clean the cache entire cache storage.
 """
+
 # global varivbles used by the program
-destory_cacahe_Tree, recent_cache = False, False
-cache_str_data, log_message = '', ''
 current_time = strftime("%m-%d-%Y", gmtime())
+destory_cacahe_Tree, recent_cache, verbose = False, False, False
+cache_str_data, log_message = '', ''
+HOME, CWD = os.environ['HOME'], os.getcwd()
+
 
 def display_help( action ):
     # This display a specfic command or all the commands
@@ -33,7 +36,7 @@ def display_help( action ):
                 "cache logs < cache name > -r => [ pending ]"
             ]
         },
-        "stat": {
+        "diff": {
             "info": """Thuis gives a status report of any differnece
                 between the cache data from last time the user
                 ached it verse the currnet state if the the
@@ -41,7 +44,7 @@ def display_help( action ):
                 that folder, the len of the items in it, and
                 the amount of paths in the folder.""",
                 "snippet": [
-                    "cache stat < cache_name >"
+                    "cache diff < cache_name >"
                 ]
         },
         "checkout": {
@@ -69,7 +72,7 @@ def display_help( action ):
                     "cache clear tree *( deletes the whole cache folder )"
                 ]
         },
-        "cache": {
+        "create": {
             "info": """This is self explanitory, it caches a foler and creates and
                 new cache doc for you compresses the data not casuing and memeory
                 usage issues.""",
@@ -103,27 +106,34 @@ def display_help( action ):
         for command in commands:
             print('\n# %s\n> %s' % ( command, commands[command]['info'] ))
             for i in commands[command]['snippet']:
-                print('\t- %s' % ( i ))
+                print('\t- `%s`' % ( i ))
         return
 
-    handle_error("*error: Unknown command '%s', ecute `cache --help` to see all commands." % ( action ))
+    display_error("*error: Unknown command '%s', execute `cache --help` to see all commands." % ( action ))
     return
 
 
-def handle_error( err_msg ):
+
+def display_error( err_msg ):
     # prints the error message to the treminal
     print( err_msg )
     return
 
-
 def command_exist( action ):
     # retruns true if the command exist else false
-    commands = ['help', 'clear', 'cache', 'checkout', 'logs', 'update', 'stat']
+    commands = ['help', 'show-tree', 'clear', 'create', 'checkout', 'logs', 'update', 'diff']
 
     if action in commands:
         return True
     return False
 
+def possiable_command( _input_ ):
+    # this function finds the possible command the user was trying to run
+
+    commands = ['help', 'show-tree', 'clear', 'create', 'checkout', 'logs', 'update', 'diff']
+    for c in commands:
+        if c == _input_[0:len(c)] or c[0:len(_input_)] == _input_:
+            print('\n\tDid you mean: `cache %s`' % ( c ))
 
 def readFile( file_name ):
     # reads a file and returns the file content
@@ -131,6 +141,7 @@ def readFile( file_name ):
         data = of.read()
         of.close()
         return data
+
 
 
 def diff( arr_1, arr_2 ):
@@ -150,34 +161,33 @@ def diff( arr_1, arr_2 ):
 
 
 
-
 def get_log( cache_name, query ):
-    """
-        Gets the most recent cache
-        log for a cache document.
-    """
+    # Gets the most recent cache log for a cache document.
 
     # Loading all the log data from the '.log' file
-    logs = readFile('./tree/.log')
+    logs = readFile(os.path.abspath(HOME + '/projects/pyScripts/tree/.log'))
     if query != 'all':
 
-        # if the pointer name is path then get the basename
-        pointer = os.path.basename( cache_name )
         # hold all the logs with the realted pointer name
         specfic_logs = []
         for l in logs.split('#'):
-            # splits a each peice to get the actual log data
-            #    ['']
-            #   ['', 'algorithm:', '06-27-2017\n\tL', '3f3d2q3r6w3v4q3p3t8u8g:', "'cache", "message'\n"] ..
+            """
+                # splits a each peice to get the actual log data
+                #   ['']
+                #   ['', 'algorithm:', '06-27-2017\n\tL', '3f3d2q3r6w3v4q3p3t8u8g:', "'cache", "message'\n"] ..
+            """
             l = l.split(' ')
             if len( l ) != 1:
-                # split the second offset of the list which
-                # contains the name removing the colon (':')
-                # then return first offset which is the name
+                """
+                    # split the second offset of the list which
+                    # contains the name removing the colon (':')
+                    # then return first offset which is the name
+                """
                 trg_cache = l[1].split(':')[0]
 
-                if trg_cache == cache_name:
-                    # appedn the cache log data
+                basename = os.path.basename( cache_name )
+                if trg_cache == cache_name or trg_cache == basename:
+                    # append the cache log data
                     specfic_logs.append( l )
 
         # print the most recent log
@@ -192,13 +202,13 @@ def get_log( cache_name, query ):
         print( logs )
 
 
+
 def write_to_log( log_data ):
-    """
-        Making a logger for the data
-        being cached.
-    """
+    # Making a logger for the data being cached.
 
     def gen_hash():
+        # genrates a alpha numeric string
+
         import string
         import random
 
@@ -213,15 +223,19 @@ def write_to_log( log_data ):
             hash_id += random.choice( alpha )
         return hash_id
 
+    # path to the .log file in the tree folder
+    log_path = os.path.abspath('%s/projects/pyScripts/tree/.log' % ( HOME ))
+
     # open a file to write to called '.log'
-    with open('./tree/.log', 'a+') as lf:
-        # write the formatted dataa to the log file
+    with open(log_path, 'a+') as lf:
+        # write the formatted data to the log file
         if log_message != '':
             lf.write('%s\tL %s: %s\n' % ( log_data, gen_hash(), log_message ) )
         else:
             lf.write('%s\tL %s\n' %  ( log_data, gen_hash() ) )
 
         lf.close()
+
 
 
 def recursive_dir_tree( root, paths ):
@@ -245,36 +259,43 @@ def recursive_dir_tree( root, paths ):
         _path = os.path.abspath('%s/%s' % ( root, i ) )
         is_path_dir = os.path.isdir( _path )
 
-        # concactenate the str of the paths over each recurison
+        # concatenate the str of the paths over each recurison
         cache_str_data += '%s\n' % ( _path )
-        if is_path_dir and os.path.basename(_path) != '.git' and os.path.basename(_path) != 'node_modules' and os.path.basename(_path) != 'Heroku' and os.path.basename(_path) != 'MongoDB':
+        if verbose == True:
+            print( _path )
 
-            # if the '_path' is a directory then call the fucntion passing
-            # in the 'root' path which was the new path ( '_path' ) and the a
-            # list of all the files or sub folders of that new path
+        if is_path_dir and os.path.basename(_path) != '.git' and os.path.basename(_path) != 'node_modules' and os.path.basename(_path) != 'Heroku' and os.path.basename(_path) != 'MongoDB' and os.path.basename(_path) != '.nylas-bench':
+            """
+                # if the '_path' is a directory then call the fucntion passing
+                # in the 'root' path which was the new path ( '_path' ) and the a
+                # list of all the files or sub folders of that new path
+            """
             recursive_dir_tree( _path, os.listdir(_path) )
+
 
 
 def log_cache( file_name, cache_str_data ):
     """
-        This fucntion wites all the paths
-        of the concactenated string 'cache_str_data'
+        This fucntion wites all the paths of
+        the concactenated string 'cache_str_data'
         in the tree folder.
     """
-    # import current_time
     global current_time
 
+    # path the a certain cache file in the tree folder
+    file_name = os.path.abspath('%s/projects/pyScripts/tree/%s' % ( HOME, file_name ))
+
     # write the data to the file
-    with open('./tree/%s' % ( file_name ), 'w') as clogs:
+    with open(file_name, 'w') as clogs:
         clogs.write( cache_str_data )
         clogs.close()
 
 
+
 def clear_cache( _cache_ ):
     """
-        Clears the cache data of
-        a given cache file or the
-        entire cache folder. However
+        Clears the cache data of a given cache
+        file or the entire cache folder. However
         not including the .logs file
     """
     if type( _cache_ ) == list:
@@ -285,7 +306,7 @@ def clear_cache( _cache_ ):
 
         ans = input('Are you sure wyou want to delete main tree cache(Y/n): ')
         if ans == 'Y':
-            os.rmdir('./tree')
+            os.rmdir(os.path.abspath(HOME + '/pyScripts/tree'))
             print('main cache tree has been prementaly deleted.')
             return 'tree=null'
 
@@ -293,20 +314,29 @@ def clear_cache( _cache_ ):
         return 'tree=0'
 
     else:
-        os.remove('./tree/%s' % ( _cache_ ))
-        print("deleting cache '%s' prementaly." % ( _cache_ ))
+
+        # path to the tree folder
+        _cache_ = '%s/projects/pyScripts/tree/%s' % ( HOME, _cache_ )
+        # deleting the cache file from the tree folder
+        os.remove( tree_path )
+
+        print("deleting cache '%s' prementaly." % ( os.path.basename( _cache_ ) ))
         return '%s=null'
 
 
+
 def create_cache( _path ):
-    """
-        creates a cache document in the tree folder
-    """
+    # creates a cache document in the tree folder
+
+    # path to the tree folder
+    tree_path = os.path.abspath('%s/projects/pyScripts/tree' % ( HOME ))
+
     # first checks to see that the tree folder exist and is a folder
-    if os.path.exists('./tree') and os.path.isdir('./tree'):
+    if os.path.exists(tree_path) and os.path.isdir(tree_path):
         try:
             # call the recursiveDirTree() passing in the '_patgh" and the items in that path
             recursive_dir_tree( _path, os.listdir(os.path.abspath(_path)) )
+
             # call the log_cache()
             log_cache( os.path.basename( _path ), cache_str_data )
 
@@ -315,8 +345,9 @@ def create_cache( _path ):
             create_cache( os.path.abspath('../%s' % ( _path )) )
     else:
         # creates the folder called 'tree' and calls create_cache() passing back the original given '_path'
-        os.mkdir('tree')
+        os.mkdir(tree_path)
         create_cache( _path )
+
 
 
 def stat( _path ):
@@ -331,12 +362,16 @@ def stat( _path ):
     # importing the 'cache_str_data'
     global cache_str_data
 
-    cache_file = './tree/%s' % ( _path )
-    if _path in os.listdir('tree'):
+    # paths to the requested cache file and the tree foler
+    cache_file = os.path.abspath('%s/projects/pyScripts/tree/%s' % ( HOME, _path ))
+    tree_path = os.path.abspath('%s/projects/pyScripts/tree'% ( HOME ))
+
+    # Checks if the path exist inside the list of the items in the tree folder
+    if _path in os.listdir(tree_path):
         # save the cached file data and trun it into a list
         cached_paths = readFile(cache_file).split('\n')
 
-        # get the new cache data paths
+        # getting the new cache data paths
         try:
             recursive_dir_tree( _path, os.listdir(os.path.abspath(_path)) )
 
@@ -344,29 +379,31 @@ def stat( _path ):
         except:
             _path = os.path.abspath('../%s' % ( _path ))
             recursive_dir_tree( _path, os.listdir( _path ) )
-        # get the current cache data paths and turn it into list
+
+        # get the current cache data paths and turn it into list spliting by '\n'
         cache_str_data = cache_str_data.split('\n')
 
         # show display of the diffs, recent logs, and number of paths
-        # diff( cached_paths, cache_str_data )
-        # diff( cache_str_data, cached_paths )
-        # get_log( _path, 'single' )
-        # print( [ d for d in cached_paths[1:] if os.path.isdir( f ) ] )
+        # > fix this diff function
+        # print( diff( cached_paths, cache_str_data ) , diff( cache_str_data, cached_paths ) )
+        get_log( _path, 'single' )
+        # > find out what I was doing here
+        print( [ d for d in cached_paths[1:] if os.path.isdir( d ) ] )
 
     else:
-        handle_error("*error: cache '%s' is not found. run `cache create < cache name>` to create cache '%s'." % ( _path, _path ))
+        display_error("*error: cache '%s' is not found. run `cache create < cache name>` to create cache '%s'." % ( _path, _path ))
+
 
 
 def ex_args( args, data ):
-    """
-        Excutes any args ( flags ) passed in by
-        the command line
-    """
+    # Excutes any args ( flags ) passed in by the command line
 
-    global log_message, destory_cacahe_Tree, recent_cache
-    # iterates over each command arg in the list args
-    # and excutes them, along with the data passed in
-    # the function exArgs()
+    global log_message, destory_cacahe_Tree, recent_cache, verbose
+    """
+        # iterates over each command arg in the list args
+        # and excutes them, along with the data passed in
+        # the function exArgs()
+    """
     for i in args:
         if i == 'm':
             log_message = ' '.join( data )
@@ -378,74 +415,94 @@ def ex_args( args, data ):
             recent_cache = True
 
 
+
 def excute_command( action, args, payload ):
 
-    if action == 'logs':
+    if command_exist( action ):
 
-        if len( payload ) == 1:
-            get_log(payload[0], 'single-all')
-        else:
-            get_log(None, 'all')
-        return
+        if action == 'show-tree' and len( payload ) == 0:
 
-    elif action == 'help' or 'h' in args:
+            for f in os.listdir('%s/projects/pyScripts/tree' % ( HOME )):
+                print('@%s' % (f ))
+            return
 
-        if len( payload ) != 0:
-            display_help( payload[0] )
+        elif action == 'logs':
 
-        else:
-            display_help( None )
-        return
+            if len( payload ) == 1:
+                get_log(payload[0], 'single-all')
+            else:
+                get_log(None, 'all')
+            return
 
-    elif len( payload ) != 0:
+        elif action == 'help' or 'h' in args:
 
-        if action == 'create':
-            noncachables, cachables = [], []
-
-            # iterate over all the items in payload
-            # and cehck which is a directory or exists
-            for i in payload:
-                if os.path.exists( os.path.abspath('../%s' % ( i )) ) and os.path.isdir( os.path.abspath('../%s' % ( i )) ):
-                    # append it to cachables and cache the directory
-                    cachables.append( i )
-                    create_cache( i )
-
-                else:
-                    noncachables.append( i )
-
-            if len( cachables ) != 0:
-                # if a arg was passed as wel
-                if len( args ) != 0:
-                    # evaluate that arguement/s
-                    ex_args( args, noncachables )
-                    write_to_log('# %s: %s\n' % ( str( ' '.join( cachables ) ), current_time ) )
-
-                else:
-                    write_to_log('# %s: %s\n' % ( str( ' '.join( cachables ) ), current_time ) )
+            if len( payload ) != 0:
+                display_help( payload[0] )
 
             else:
-                # if nothing was not cached
-                handle_error('*error: Nothing was cached, excute `cache --help < command name >` for help on command usage; exit.')
+                display_help( None )
+            return
 
-        elif action == 'clear':
-            clear_cache( payload )
+        elif len( payload ) != 0:
 
-        elif action == 'stat':
-            stat( payload[0] )
+            if action == 'create':
+                noncachables, cachables = [], []
 
+                if 'v' in args:
+                    global verbose
+                    verbose = True
+
+                # iterate over all the items in payload
+                # and check which is a directory or exists
+                for i in payload:
+                    i = i.strip('\\')
+
+                    if os.path.exists( os.path.abspath('../%s' % ( i )) ) or os.path.exists( os.path.abspath('./%s' % ( i )) ) and os.path.isdir( os.path.abspath('../%s' % ( i )) ) or os.path.isdir( os.path.abspath('./%s' % ( i )) ):
+                        # append it to cachables and cache the directory
+                        cachables.append( i )
+
+                        # cache that file path
+                        create_cache( i )
+
+                    else:
+                        noncachables.append( i )
+
+                if len( cachables ) != 0:
+
+                    # if a arg was passed as well
+                    if len( args ) != 0:
+                        # evaluate that arguement/s
+                        ex_args( args, noncachables )
+
+                    # write to .log file in the tree folder to document the cache creation
+                    write_to_log('# %s: %s\n' % ( str( ' '.join( cachables ) ), current_time ) )
+
+                else:
+                    # if nothing was not cached or append in cachables display error
+                    display_error('*error: Nothing was cached you provide data to be cached, excute `cache --help < command name >` for help on command usage; exit.')
+
+            elif action == 'clear':
+                clear_cache( payload )
+
+            elif action == 'diff':
+                # paylaod first arguement is the cache file name
+                stat( payload[0] )
 
         return
 
+    else:
+         display_error("*error: Unknown command '%s', execute `cache --help` to see all commands." % ( action ))
 
-    handle_error('*error: This program needs the required payload to proceed.')
+         possiable_command( action )
+         return
+
+    display_error('*error: This program needs the required payload to proceed.')
+
 
 
 def arg_parser( args ):
-    """
-        This parsers the arguements
-        passed down from the command
-        line.
-    """
+    # This parsers the arguements passed down from the command line.
+
     obj = {
         'action': '',
         'args': [],
@@ -475,8 +532,13 @@ def arg_parser( args ):
     return obj
 
 
+
 # main fucntion of program
 def main():
+
+    if len( sys.argv[1:] ) == 0:
+        display_error("*error: No command was given, type `cache --help` to see all commands.")
+        return
 
     # calls the fucntion argParser to parser the
     # arguements given throuht the command line
@@ -486,8 +548,16 @@ def main():
     excute_command( args['action'], args['args'], args['payload'] )
 
 
+
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
 
 
 
@@ -499,7 +569,7 @@ if __name__ == '__main__':
     # elif action == 'checkout':
     # else:
     #     if not command_exist( action ):
-    #         handle_error("*error: Unknown command '%s', excute `cache --help < command name >` for the commands and usage." % ( action ))
+    #         display_error("*error: Unknown command '%s', excute `cache --help < command name >` for the commands and usage." % ( action ))
 
 # later featrue for update():
 
