@@ -161,11 +161,54 @@ def diff( arr_1, arr_2 ):
 
 
 
+def log_cache( file_name, cache_str_data ):
+    """
+        This fucntion wites all the paths of
+        the concactenated string 'cache_str_data'
+        in the tree folder.
+    """
+    global current_time
+
+    # path the a certain cache file in the tree folder
+    file_name = os.path.abspath('%s/projects/pyScripts/tree/%s' % ( HOME, file_name ))
+
+    # write the data to the file
+    with open(file_name, 'w') as clogs:
+        clogs.write( cache_str_data )
+        clogs.close()
+
+
+
+def resolve_path( _path ):
+    """
+         This function takes a arguemnt of a file path
+         returns back the abosulte path or it takes a
+         file or folder name and resloves the path to
+         the absolute path.
+
+         However if the path can not be resolved then it
+         returns False
+    """
+    _path = os.path.abspath( _path )
+
+    if os.path.exists( _path ):
+        return _path
+    else:
+
+        _path_basename = os.path.basename( _path )
+        if _path_basename in listdir('.'):
+
+            return resolve_path('%s/%s' % ( cwd, _path_basename ))
+        else:
+            return False
+
+
+
 def get_log( cache_name, query ):
     # Gets the most recent cache log for a cache document.
 
     # Loading all the log data from the '.log' file
-    logs = readFile(os.path.abspath(HOME + '/projects/pyScripts/tree/.log'))
+    logs = readFile(resolve_path(HOME + '/projects/pyScripts/tree/.log'))
     if query != 'all':
 
         # hold all the logs with the realted pointer name
@@ -224,7 +267,7 @@ def write_to_log( log_data ):
         return hash_id
 
     # path to the .log file in the tree folder
-    log_path = os.path.abspath('%s/projects/pyScripts/tree/.log' % ( HOME ))
+    log_path = resolve_path('%s/projects/pyScripts/tree/.log' % ( HOME ))
 
     # open a file to write to called '.log'
     with open(log_path, 'a+') as lf:
@@ -246,7 +289,7 @@ def recursive_dir_tree( root, paths ):
         to all files and sub diretory.
     """
     # make the 'root' path given a absolute path
-    root =  os.path.abspath(root)
+    root =  reslove_path(root)
 
     # import 'cache_str_data'
     global cache_str_data
@@ -256,7 +299,7 @@ def recursive_dir_tree( root, paths ):
 
         # make a new path based by concactenating the 'root' path and the new path 'i'
         # reslove the absoulte path of the new formatted path
-        _path = os.path.abspath('%s/%s' % ( root, i ) )
+        _path = reslove_path('%s/%s' % ( root, i ) )
         is_path_dir = os.path.isdir( _path )
 
         # concatenate the str of the paths over each recurison
@@ -274,24 +317,6 @@ def recursive_dir_tree( root, paths ):
 
 
 
-def log_cache( file_name, cache_str_data ):
-    """
-        This fucntion wites all the paths of
-        the concactenated string 'cache_str_data'
-        in the tree folder.
-    """
-    global current_time
-
-    # path the a certain cache file in the tree folder
-    file_name = os.path.abspath('%s/projects/pyScripts/tree/%s' % ( HOME, file_name ))
-
-    # write the data to the file
-    with open(file_name, 'w') as clogs:
-        clogs.write( cache_str_data )
-        clogs.close()
-
-
-
 def clear_cache( _cache_ ):
     """
         Clears the cache data of a given cache
@@ -306,7 +331,7 @@ def clear_cache( _cache_ ):
 
         ans = input('Are you sure wyou want to delete main tree cache(Y/n): ')
         if ans == 'Y':
-            os.rmdir(os.path.abspath(HOME + '/pyScripts/tree'))
+            os.rmdir(reslove_path(HOME + '/pyScripts/tree'))
             print('main cache tree has been prementaly deleted.')
             return 'tree=null'
 
@@ -329,20 +354,20 @@ def create_cache( _path ):
     # creates a cache document in the tree folder
 
     # path to the tree folder
-    tree_path = os.path.abspath('%s/projects/pyScripts/tree' % ( HOME ))
+    tree_path = reslove_path('%s/projects/pyScripts/tree' % ( HOME ))
 
     # first checks to see that the tree folder exist and is a folder
     if os.path.exists(tree_path) and os.path.isdir(tree_path):
         try:
             # call the recursiveDirTree() passing in the '_patgh" and the items in that path
-            recursive_dir_tree( _path, os.listdir(os.path.abspath(_path)) )
+            recursive_dir_tree( _path, os.listdir(reslove_path(_path)) )
 
             # call the log_cache()
             log_cache( os.path.basename( _path ), cache_str_data )
 
         except:
             # if any erros occur such as the '_path' given not being abslotue path
-            create_cache( os.path.abspath('../%s' % ( _path )) )
+            create_cache( reslove_path('../%s' % ( _path )) )
     else:
         # creates the folder called 'tree' and calls create_cache() passing back the original given '_path'
         os.mkdir(tree_path)
@@ -363,8 +388,8 @@ def stat( _path ):
     global cache_str_data
 
     # paths to the requested cache file and the tree foler
-    cache_file = os.path.abspath('%s/projects/pyScripts/tree/%s' % ( HOME, _path ))
-    tree_path = os.path.abspath('%s/projects/pyScripts/tree'% ( HOME ))
+    cache_file = reslove_path('%s/projects/pyScripts/tree/%s' % ( HOME, _path ))
+    tree_path = reslove_path('%s/projects/pyScripts/tree'% ( HOME ))
 
     # Checks if the path exist inside the list of the items in the tree folder
     if _path in os.listdir(tree_path):
@@ -373,11 +398,11 @@ def stat( _path ):
 
         # getting the new cache data paths
         try:
-            recursive_dir_tree( _path, os.listdir(os.path.abspath(_path)) )
+            recursive_dir_tree( _path, os.listdir(reslove_path(_path)) )
 
         # if the first run does not work formt a new path and call the function again
         except:
-            _path = os.path.abspath('../%s' % ( _path ))
+            _path = reslove_path('../%s' % ( _path ))
             recursive_dir_tree( _path, os.listdir( _path ) )
 
         # get the current cache data paths and turn it into list spliting by '\n'
@@ -457,7 +482,7 @@ def excute_command( action, args, payload ):
                 for i in payload:
                     i = i.strip('\\')
 
-                    if os.path.exists( os.path.abspath('../%s' % ( i )) ) or os.path.exists( os.path.abspath('./%s' % ( i )) ) and os.path.isdir( os.path.abspath('../%s' % ( i )) ) or os.path.isdir( os.path.abspath('./%s' % ( i )) ):
+                    if os.path.exists( reslove_path( i ) ) or os.path.exists( reslove_path( i ) ) and os.path.isdir( reslove_path( i ) ) or os.path.isdir( reslove_path( i ) ):
                         # append it to cachables and cache the directory
                         cachables.append( i )
 
